@@ -11,7 +11,7 @@ public class VideoService {
     @Value("${youtube.api.key}")
     private String apiKey;
 
-    public VideoResponse analyzeVideo(String url){
+    public VideoResponse fetchMetadata(String url){
         String videoId=extractVideoId(url);
         String apiUrl="https://www.googleapis.com/youtube/v3/videos" +
                 "?part=snippet,contentDetails" + "&id=" + videoId + "&key=" + apiKey;
