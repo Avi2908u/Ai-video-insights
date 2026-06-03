@@ -75,7 +75,7 @@ PostgreSQL / Vector DB
 
 ### Phase 1
 
-* [ ] Transcript extraction
+* [x] Transcript extraction
 * [ ] Video summarization
 * [ ] Store analysis results
 
