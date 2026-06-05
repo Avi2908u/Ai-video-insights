@@ -1,6 +1,6 @@
 package com.Aivideoinsights.backend.dto;
 
-public class VideoResponse {
+public class VideoResponse{
 
     private String title;
     private String channel;

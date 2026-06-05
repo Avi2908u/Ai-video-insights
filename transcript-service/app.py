@@ -8,7 +8,7 @@ def get_transcript(video_id):
     try:
         api=YouTubeTranscriptApi()
 
-        transcript = api.fetch(video_id)
+        transcript = api.fetch(video_id, languages=['en','hi'])
 
         full_text = " ".join(
             snippet.text
@@ -17,10 +17,11 @@ def get_transcript(video_id):
 
         return jsonify({
             "videoId": video_id,
+            "language": getattr(transcript, "language", "unknown"),
             "transcript": full_text
         })
     except Exception as e:
-        return jsonify({"error":str(e)}),500    
+        return jsonify({"videoId": video_id, "error":str(e)}),500    
 
 if __name__ == '__main__':
     app.run(port=5000)

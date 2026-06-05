@@ -14,6 +14,6 @@ public class VideoController {
 
     @PostMapping("/analyze")
     public VideoResponse analyzeVideo(@RequestBody VideoRequest request){
-        return vid.fetchMetadata(request.getUrl());
+        return vid.fetchMetadata(request.url());
     }
 }
