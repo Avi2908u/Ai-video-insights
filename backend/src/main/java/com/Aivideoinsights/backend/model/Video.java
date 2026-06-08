@@ -20,4 +20,8 @@ public class Video {
     private String channel;
     private String duration;
     private LocalDateTime createdAt;
+    @Column(columnDefinition = "TEXT")
+    private String keyTopics;
+    @Column(columnDefinition = "TEXT")
+    private String notes;
 }

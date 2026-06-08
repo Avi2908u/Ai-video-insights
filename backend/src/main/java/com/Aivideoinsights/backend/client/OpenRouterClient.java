@@ -27,27 +27,85 @@ public class OpenRouterClient {
 
     public String generateSummary(String transcript) {
         String prompt = """
-                You are a professional summarization assistant.
+                        You are an expert content summarizer.
                 
-                 Your task is to create a genuine summary of the transcript.
+                                        Your task is to create a comprehensive summary of the following video transcript.
                 
-                 Rules:
-                 - Summarize the content, not the topics.
-                 - Preserve the main message and flow of the transcript.
-                 - Produce an abstractive summary rather than an extractive summary.
-                 - Combine related ideas into a coherent paragraph.
-                 - Do not list features, concepts, or keywords individually.
-                 - Do not use bullet points.
-                 - Do not explain what the video is about.
-                 - Do not start with phrases like:
-                   "The video discusses..."
-                   "This video explains..."
-                   "The speaker talks about..."
-                 - Keep only the most important information which is present in the transcript.
-                 - Limit the output to half the sentences than in the transcript.
-                Transcript:
-                %s
+                                        Instructions:
+                                        - Preserve the flow of the lecture.
+                                        - Focus on the concepts being taught.
+                                        - Explain the important ideas and their relationships.
+                                        - Write in clear, professional language.
+                                        - Do not use bullet points.
+                                        - Do not mention phrases such as:
+                                          "The video explains"
+                                          "The speaker discusses"
+                                          "This video talks about"
+                                        - Write 200-400 words.
+                                        - Only use information present in the transcript.
+                                        - Do not invent facts.
+                
+                                        Transcript:
+                
+                                        %s        
                 """.formatted(transcript);
+        return callOpenRouter(prompt);
+    }
+    public String generateKeyTopics(String transcript) {
+        String prompt = """
+                You are an expert technical content analyzer.
+                
+                                Extract the most important learning concepts from the transcript.
+                
+                                Instructions:
+                                - Return only a JSON array.
+                                - Extract between 5 and 10 topics.
+                                - Topics must represent actual concepts taught in the video.
+                                - Keep each topic short and concise.
+                                - Avoid generic terms.
+                                - Avoid duplicates.
+                                - Do not return explanations.
+                
+                                Example:
+                
+                                [
+                                  "Spring Boot",
+                                  "Embedded Tomcat",
+                                  "Dependency Management"
+                                ]
+                
+                                Transcript:
+                
+                                %s
+                """.formatted(transcript);
+        return callOpenRouter(prompt);
+    }
+    public String generateNotes(String transcript) {
+        String prompt = """
+                You are an expert software engineering instructor.
+                
+                                Create detailed study notes from the transcript.
+                
+                                Instructions:
+                                - Use markdown formatting.
+                                - Organize notes using headings and subheadings.
+                                - Explain each important concept.
+                                - Include definitions where appropriate.
+                                - Include examples mentioned in the transcript.
+                                - Include important revision points.
+                                - Structure the notes for quick learning.
+                                - Minimum 300 words.
+                                - Do not mention the speaker.
+                                - Use only information available in the transcript.
+                
+                                Transcript:
+                
+                                %s
+                """.formatted(transcript);
+        return callOpenRouter(prompt);
+    }
+    private String callOpenRouter(String prompt){
+
         OpenRouterRequest request = new OpenRouterRequest(model, List.of(new Message("user", prompt)));
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(apiKey);

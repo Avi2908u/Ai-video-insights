@@ -1,4 +1,7 @@
 package com.Aivideoinsights.backend.dto;
 
-public record VideoAnalysisResponse(String title, String channel, String duration, String transcript, String summary) {
+import java.util.List;
+
+public record VideoAnalysisResponse(String title, String channel, String duration,
+                                    String transcript, String summary, List<String> keyTopics, String notes) {
 }

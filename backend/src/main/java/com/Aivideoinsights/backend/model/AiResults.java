@@ -9,15 +9,20 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Summary {
+public class AiResults {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @OneToOne
     private Video video;
-    private String summaryType;
 
     @Column(columnDefinition = "TEXT")
-    private String summaryText;
+    private String summary;
+
+    @Column(columnDefinition = "TEXT")
+    private String keyTopics;
+
+    @Column(columnDefinition = "TEXT")
+    private String notes;
 }
