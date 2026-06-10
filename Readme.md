@@ -83,7 +83,7 @@ PostgreSQL / Vector DB
 
 * [x] Topic extraction
 * [x] Notes generation
-* [ ] Timestamped insights
+* [x] Timestamped insights
 
 ### Phase 3
 

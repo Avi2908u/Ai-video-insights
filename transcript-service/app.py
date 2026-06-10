@@ -15,10 +15,17 @@ def get_transcript(video_id):
             for snippet in transcript
         )
 
+        segments=[{
+            "text": snippet.text,
+            "start": snippet.start,
+        } for snippet in transcript
+        ]
+
         return jsonify({
             "videoId": video_id,
             "language": getattr(transcript, "language", "unknown"),
-            "transcript": full_text
+            "transcript": full_text,
+            "segments": segments
         })
     except Exception as e:
         return jsonify({"videoId": video_id, "error":str(e)}),500    

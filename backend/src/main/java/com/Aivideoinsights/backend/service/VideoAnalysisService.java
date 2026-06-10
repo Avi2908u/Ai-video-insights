@@ -1,8 +1,6 @@
 package com.Aivideoinsights.backend.service;
 
-import com.Aivideoinsights.backend.dto.TranscriptResponse;
-import com.Aivideoinsights.backend.dto.VideoAnalysisResponse;
-import com.Aivideoinsights.backend.dto.VideoResponse;
+import com.Aivideoinsights.backend.dto.*;
 import com.Aivideoinsights.backend.model.AiResults;
 import com.Aivideoinsights.backend.model.Transcript;
 import com.Aivideoinsights.backend.model.Video;
@@ -29,10 +27,12 @@ public class VideoAnalysisService {
     private final AiResultsRepository aiResultsRepository;
     private final TranscriptRepository transcriptRepository;
     private final ObjectMapper objectMapper;
+    private final TimestampedNotesService timestampedNotesService;
 
     public VideoAnalysisService(VideoService videoService, TranscriptService transcriptService, AiService aiService,
                                 VideoRepository videoRepository, AiResultsRepository aiResultsRepository,
-                                TranscriptRepository transcriptRepository, ObjectMapper objectMapper){
+                                TranscriptRepository transcriptRepository, ObjectMapper objectMapper,
+                                TimestampedNotesService timestampedNotesService){
         this.videoService=videoService;
         this.transcriptService=transcriptService;
         this.aiService = aiService;
@@ -40,24 +40,31 @@ public class VideoAnalysisService {
         this.aiResultsRepository = aiResultsRepository;
         this.transcriptRepository=transcriptRepository;
         this.objectMapper=objectMapper;
+        this.timestampedNotesService=timestampedNotesService;
     }
     public VideoAnalysisResponse analyzeVideo(String url){
         String videoId = extractVideoId(url);
         Optional<Video> existingVideo= videoRepository.findByYoutubeVideoId(videoId);
+
         if(existingVideo.isPresent()){
             Video video = existingVideo.get();
             Transcript transcript= transcriptRepository.findByVideo(video).orElseThrow();
             AiResults airesults= aiResultsRepository.findByVideo(video).orElseThrow();
-            List<String> topics;
+
             try{
-                topics= objectMapper.readValue(airesults.getKeyTopics(), new TypeReference<List<String>>() {
+                List<KeyTopic> topics= objectMapper.readValue(airesults.getKeyTopics(),
+                        new TypeReference<List<KeyTopic>>() {
                 });
+                List<TimestampedNote> timestampedNotes = objectMapper.readValue(airesults.getNotes(),
+                        new TypeReference<List<TimestampedNote>>() {
+                });
+                return new VideoAnalysisResponse(video.getTitle(),video.getChannel(),video.getDuration(),
+                        transcript.getTranscriptText(), airesults.getSummary(), topics,
+                        timestampedNotes);
             }catch (Exception e){
                 throw new RuntimeException(e);
             }
-            return new VideoAnalysisResponse(video.getTitle(),video.getChannel(),video.getDuration(),
-                    transcript.getTranscriptText(), airesults.getSummary(), topics,
-                    airesults.getNotes());
+
         }
         VideoResponse metadata = videoService.fetchMetadata(url);
         TranscriptResponse transcriptResponse = transcriptService.getTranscript(videoId);
@@ -65,16 +72,17 @@ public class VideoAnalysisService {
 
         String summary = aiService.generateSummary(transcriptText);
         String keyTopics= cleanJsonResponse(aiService.generateKeyTopics(transcriptText));
-        String notes= aiService.generateNotes(transcriptText);
-        List<String> topics;
+        List<TimestampedNote> timestampedNote= timestampedNotesService.generateNotes(transcriptResponse.getSegments());
+        List<KeyTopic> topics;
         try {
             topics = objectMapper.readValue(
                     keyTopics,
-                    new TypeReference<List<String>>() {}
+                    new TypeReference<List<KeyTopic>>() {}
             );
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse AI topics response",e);
         }
+
         Video video = new Video();
         video.setYoutubeVideoId(videoId);
         video.setTitle(metadata.getTitle());
@@ -92,11 +100,15 @@ public class VideoAnalysisService {
         aiResults.setVideo(video);
         aiResults.setSummary(summary);
         aiResults.setKeyTopics(keyTopics);
-        aiResults.setNotes(notes);
+        try{
+            aiResults.setNotes(objectMapper.writeValueAsString(timestampedNote));
+        }catch(Exception e){
+            throw new RuntimeException(e);
+        }
         aiResultsRepository.save(aiResults);
 
         return new VideoAnalysisResponse(metadata.getTitle(), metadata.getChannel(), metadata.getDuration(),
-                transcriptText , summary, topics, notes);
+                transcriptText , summary, topics, timestampedNote);
     }
     private String cleanJsonResponse(String response){
         return response.replace("```json","").replace("```","").trim();

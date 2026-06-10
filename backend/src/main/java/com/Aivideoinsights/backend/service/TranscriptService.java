@@ -11,8 +11,7 @@ public class TranscriptService {
     }
 
     public TranscriptResponse getTranscript(String videoId){
-        String transcript = transcriptClient.fetchTranscript(videoId);
-        return new TranscriptResponse(videoId,transcript);
+        return transcriptClient.fetchTranscript(videoId);
     }
 
 }
