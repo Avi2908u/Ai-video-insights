@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101525" />
+  <title>AI Video Insights — Learning workspace</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#overview" aria-label="AI Video Insights home"><span class="brand-mark">✧</span><span><b>AI Video Insights</b><small>Learning workspace</small></span></a>
+      <nav class="nav-list" aria-label="Main navigation">
+        <button data-page="overview" class="nav-item active"><span class="nav-icon">▦</span>Overview</button>
+        <button data-page="analyze" class="nav-item"><span class="nav-icon">▣</span>Analyze Video</button>
+        <button data-page="library" class="nav-item"><span class="nav-icon">▤</span>My Library</button>
+        <button data-page="notes" class="nav-item"><span class="nav-icon">▧</span>Notes</button>
+        <button class="nav-item muted" title="Learning roadmaps are not available yet"><span class="nav-icon">◇</span>Learning Roadmaps <span class="soon">Soon</span></button>
+        <button class="nav-item muted" title="Flashcards and quizzes are not available yet"><span class="nav-icon">◉</span>Flashcards &amp; Quizzes <span class="soon">Soon</span></button>
+      </nav>
+      <div class="sidebar-bottom"><div class="profile"><span class="avatar">AI</span><span><b>Your workspace</b><small>Personal library</small></span><span class="profile-gear">⚙</span></div><div class="connection"><i></i><span>Backend connection</span><b id="connection-status">Ready</b></div></div>
+    </aside>
+    <main class="main-area">
+      <header class="topbar"><button id="menu-toggle" class="menu-toggle" aria-label="Toggle menu">☰</button><div class="crumb"><span>Workspace</span><b id="page-title">Overview</b></div><div class="top-actions"><label class="searchbox"><span>⌕</span><input id="global-search" placeholder="Search videos and notes…" aria-label="Search videos and notes" /></label><span class="top-avatar">AI</span></div></header>
+      <div id="page-content" class="page-content"></div>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>

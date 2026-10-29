@@ -9,4 +9,32 @@
 .vscode/
 
 ### Youtube Key###
-src/main/resources/application.properties
+.env
+/venv
+# Local environments and generated files
+.venv/
+venv/
+**/venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+**/target/
+.idea/
+.env.*
+!.env.example
+# Backend-specific generated files and Maven wrapper
+backend/HELP.md
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/.apt_generated/
+backend/.classpath
+backend/.factorypath
+backend/.project
+backend/.settings/
+backend/.springBeans
+backend/.sts4-cache/
+backend/nbproject/private/
+backend/nbbuild/
+backend/dist/
+backend/nbdist/
+backend/.nb-gradle/
+backend/build/

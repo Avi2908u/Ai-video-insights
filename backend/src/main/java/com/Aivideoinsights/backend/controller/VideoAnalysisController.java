@@ -5,8 +5,10 @@ import com.Aivideoinsights.backend.service.VideoAnalysisService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 @RestController
+@CrossOrigin(origins = "*")
 public class VideoAnalysisController {
     private final VideoAnalysisService videoAnalysisService;
     public VideoAnalysisController(VideoAnalysisService videoAnalysisService){

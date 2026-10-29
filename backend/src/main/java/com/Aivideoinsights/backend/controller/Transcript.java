@@ -4,6 +4,7 @@ import com.Aivideoinsights.backend.dto.TranscriptResponse;
 import com.Aivideoinsights.backend.service.TranscriptService;
 import org.springframework.web.bind.annotation.*;
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/api/transcript")
 public class Transcript {
     private final TranscriptService transcriptService;

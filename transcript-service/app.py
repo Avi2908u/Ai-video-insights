@@ -1,34 +1,29 @@
-from flask import Flask, jsonify
+from fastapi import FastAPI, HTTPException
 from youtube_transcript_api import YouTubeTranscriptApi
 
-app= Flask(__name__)
+app = FastAPI(
+    title="AI Video Insights Transcript Service",
+    description="Fetches YouTube transcripts for the Spring Boot backend.",
+    version="1.0.0",
+)
 
-@app.route('/transcript/<video_id>')
-def get_transcript(video_id):
+
+@app.get("/transcript/{video_id}")
+def get_transcript(video_id: str) -> dict:
     try:
-        api=YouTubeTranscriptApi()
-
-        transcript = api.fetch(video_id, languages=['en','hi'])
-
-        full_text = " ".join(
-            snippet.text
+        transcript = YouTubeTranscriptApi().fetch(video_id, languages=["en", "hi"])
+        segments = [
+            {"text": snippet.text, "start": snippet.start}
             for snippet in transcript
-        )
-
-        segments=[{
-            "text": snippet.text,
-            "start": snippet.start,
-        } for snippet in transcript
         ]
-
-        return jsonify({
+        return {
             "videoId": video_id,
             "language": getattr(transcript, "language", "unknown"),
-            "transcript": full_text,
-            "segments": segments
-        })
-    except Exception as e:
-        return jsonify({"videoId": video_id, "error":str(e)}),500    
-
-if __name__ == '__main__':
-    app.run(port=5000)
+            "transcript": " ".join(segment["text"] for segment in segments),
+            "segments": segments,
+        }
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail={"videoId": video_id, "error": str(exc)},
+        ) from exc

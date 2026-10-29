@@ -1,6 +1,7 @@
 package com.Aivideoinsights.backend.service;
 import com.Aivideoinsights.backend.dto.youtube.*;
 import com.Aivideoinsights.backend.dto.VideoResponse;
+import com.Aivideoinsights.backend.util.YoutubeUtil;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -12,7 +13,7 @@ public class VideoService {
     private String apiKey;
 
     public VideoResponse fetchMetadata(String url){
-        String videoId=extractVideoId(url);
+        String videoId=YoutubeUtil.extractVideoId(url);
         String apiUrl="https://www.googleapis.com/youtube/v3/videos" +
                 "?part=snippet,contentDetails" + "&id=" + videoId + "&key=" + apiKey;
 
@@ -23,9 +24,5 @@ public class VideoService {
         String channel=item.getSnippet().getChannelTitle();
         String duration=item.getContentDetails().getDuration();
         return new VideoResponse(title,channel,duration);
-    }
-
-    private String extractVideoId(String url){
-        return url.split("v=")[1];
     }
 }
