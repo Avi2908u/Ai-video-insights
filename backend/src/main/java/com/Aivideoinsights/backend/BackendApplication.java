@@ -22,8 +22,28 @@ public class BackendApplication {
 
     public static void main(String[] args) {
         loadDotEnv();
+        normalizeDatabaseUrl();
         ensureDatabaseExists();
         SpringApplication.run(BackendApplication.class, args);
+    }
+
+    private static void normalizeDatabaseUrl() {
+        String dbUrl = System.getProperty("spring.datasource.url");
+        if (dbUrl == null || dbUrl.isBlank()) {
+            dbUrl = System.getenv("DB_URL");
+        }
+        if (dbUrl == null || dbUrl.isBlank()) {
+            dbUrl = System.getenv("DATABASE_URL");
+        }
+        if (dbUrl != null && !dbUrl.isBlank()) {
+            if (dbUrl.startsWith("postgres://")) {
+                dbUrl = "jdbc:postgresql://" + dbUrl.substring(11);
+            } else if (dbUrl.startsWith("postgresql://")) {
+                dbUrl = "jdbc:postgresql://" + dbUrl.substring(13);
+            }
+            System.setProperty("spring.datasource.url", dbUrl);
+            System.setProperty("DB_URL", dbUrl);
+        }
     }
 
     private static void loadDotEnv() {

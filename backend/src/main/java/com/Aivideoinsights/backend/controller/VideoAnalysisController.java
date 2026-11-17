@@ -22,6 +22,16 @@ public class VideoAnalysisController {
         this.videoAnalysisService=videoAnalysisService;
         this.videoQuestionService=videoQuestionService;
     }
+    @GetMapping("/")
+    public java.util.Map<String, String> root() {
+        return java.util.Map.of("status", "UP", "message", "AI Video Insights API is running");
+    }
+
+    @GetMapping("/api/health")
+    public java.util.Map<String, String> health() {
+        return java.util.Map.of("status", "UP");
+    }
+
     @GetMapping("/api/video/analyze")
     public VideoAnalysisResponse analyzeVideo(@RequestParam String url){
         return videoAnalysisService.analyzeVideo(url);
