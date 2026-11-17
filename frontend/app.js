@@ -7,6 +7,7 @@
   let currentPage = 'overview';
   let activeResult = null;
   let resultTab = 'summary';
+  const qaMessages = new Map();
   let toastTimer;
 
   function readLibrary() { try { const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); return Array.isArray(data) ? data : []; } catch { return []; } }
@@ -65,8 +66,34 @@
     if(resultTab==='notes') body=`<article class="analysis-card"><h3>Timestamped study notes</h3>${notes.length?`<div class="note-list">${notes.map(note=>`<article class="note-item"><a class="timestamp" target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=${encodeURIComponent(item.id)}&t=${timeSeconds(note.timestamp)}s">${esc(note.timestamp || '0:00')}</a><div><h4>${esc(note.title || 'Study note')}</h4><p>${esc(note.notes || '')}</p></div></article>`).join('')}</div>`:'<p class="panel-sub">No timestamped notes were returned.</p>'}</article>`;
     if(resultTab==='topics') body=`<article class="analysis-card"><h3>Key topics</h3>${topics.length?`<div class="topic-list">${topics.map(topic=>`<div class="topic-item">${topic.timestamp?`<a class="timestamp" target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=${encodeURIComponent(item.id)}&t=${timeSeconds(topic.timestamp)}s">${esc(topic.timestamp)}</a>`:''}<span>${esc(topic.topic || topic.title || topic)}</span></div>`).join('')}</div>`:'<p class="panel-sub">No key topics were returned.</p>'}</article>`;
     if(resultTab==='transcript') body=`<article class="analysis-card"><h3>Transcript</h3><div class="transcript-copy">${esc(item.transcript || 'No transcript was returned.')}</div></article>`;
+    if(resultTab==='questions') { const messages=qaMessages.get(item.id)||[]; body=`<article class="analysis-card qa-card"><h3>Ask about this video</h3><p class="panel-sub">Answers use the transcript and include timestamp references.</p><div class="qa-messages">${messages.length?messages.map(message=>`<div class="qa-message ${message.role}"><div class="qa-role">${message.role==='user'?'You':'Video assistant'}</div><div class="qa-text">${esc(message.text)}</div>${message.citations?.length?`<div class="qa-citations"><span>From the video</span>${message.citations.map(c=>`<a class="timestamp" target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=${encodeURIComponent(item.id)}&t=${Math.floor(Number(c.timestamp)||0)}s">${formatTimestamp(c.timestamp)}</a>`).join('')}</div>`:''}</div>`).join(''):`<div class="qa-empty"><b>What would you like to understand?</b><span>Ask about an idea, example, or explanation from this video.</span></div>`}</div><form class="qa-form" id="qa-form"><input id="qa-question" maxlength="1000" placeholder="Ask a question about this video…" required /><button class="primary-btn" type="submit">Ask</button></form><div class="qa-error" id="qa-error" role="alert"></div><div class="examples"><button class="chip" type="button" data-question="What are the main ideas in this video?">Main ideas</button><button class="chip" type="button" data-question="Can you explain an example from the video?">Explain an example</button><button class="chip" type="button" data-question="What should I remember from this video?">Key takeaway</button></div></article>`; }
     const videoHref=`https://www.youtube.com/watch?v=${encodeURIComponent(item.id)}`;
-    return `<div class="result-top"><div><button class="text-btn" data-go="library">← Back to library</button><h1>${esc(item.title)}</h1><div class="result-meta"><span>${esc(item.channel || 'YouTube')}</span><span>◷ ${esc(durationText(item.duration))}</span><span>Analyzed ${esc(item.savedAt?new Date(item.savedAt).toLocaleDateString(): 'recently')}</span><a href="${videoHref}" target="_blank" rel="noopener">YouTube ↗</a></div></div><div class="result-actions"><button class="secondary-btn" data-copy="summary">▢ Copy summary</button></div></div><div class="result-layout"><div><div class="tabbar">${[['summary','Summary'],['notes','Detailed Notes'],['topics','Key Topics'],['transcript','Transcript']].map(([key,label])=>`<button class="tab ${resultTab===key?'active':''}" data-tab="${key}">${label}</button>`).join('')}</div>${body}</div><aside class="side-column"><div><a href="${videoHref}" target="_blank" rel="noopener"><img class="side-video" src="${thumb(item.id)}" alt="Video thumbnail"></a></div><article class="analysis-card side-panel"><h3>Learning insights</h3><div class="insight-row"><span>Video length</span><b>${esc(durationText(item.duration))}</b></div><div class="insight-row"><span>Key topics</span><b>${topics.length}</b></div><div class="insight-row"><span>Study notes</span><b>${notes.length}</b></div><div class="insight-row"><span>Transcript</span><b>${item.transcript?'Available':'Unavailable'}</b></div><div style="margin-top:10px"><button class="secondary-btn" data-copy="transcript" style="width:100%">Copy transcript</button></div></article></aside></div>`;
+    return `<div class="result-top"><div><button class="text-btn" data-go="library">← Back to library</button><h1>${esc(item.title)}</h1><div class="result-meta"><span>${esc(item.channel || 'YouTube')}</span><span>◷ ${esc(durationText(item.duration))}</span><span>Analyzed ${esc(item.savedAt?new Date(item.savedAt).toLocaleDateString(): 'recently')}</span><a href="${videoHref}" target="_blank" rel="noopener">YouTube ↗</a></div></div><div class="result-actions"><button class="secondary-btn" data-copy="summary">▢ Copy summary</button></div></div><div class="result-layout"><div><div class="tabbar">${[['summary','Summary'],['notes','Detailed Notes'],['topics','Key Topics'],['transcript','Transcript'],['questions','Ask questions']].map(([key,label])=>`<button class="tab ${resultTab===key?'active':''}" data-tab="${key}">${label}</button>`).join('')}</div>${body}</div><aside class="side-column"><div><a href="${videoHref}" target="_blank" rel="noopener"><img class="side-video" src="${thumb(item.id)}" alt="Video thumbnail"></a></div><article class="analysis-card side-panel"><h3>Learning insights</h3><div class="insight-row"><span>Video length</span><b>${esc(durationText(item.duration))}</b></div><div class="insight-row"><span>Key topics</span><b>${topics.length}</b></div><div class="insight-row"><span>Study notes</span><b>${notes.length}</b></div><div class="insight-row"><span>Transcript</span><b>${item.transcript?'Available':'Unavailable'}</b></div><div style="margin-top:10px"><button class="secondary-btn" data-copy="transcript" style="width:100%">Copy transcript</button></div></article></aside></div>`;
+  }
+
+  function formatTimestamp(value) { const seconds=Math.max(0,Math.floor(Number(value)||0)); return `${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`; }
+
+  async function askQuestion(event) {
+    event.preventDefault();
+    const question=document.querySelector('#qa-question').value.trim();
+    const messages=qaMessages.get(activeResult.id)||[];
+    if(!question) return;
+    messages.push({role:'user',text:question}); qaMessages.set(activeResult.id,messages);
+    render();
+    const form=document.querySelector('#qa-form'), button=form.querySelector('button'), error=document.querySelector('#qa-error');
+    button.disabled=true; button.textContent='Thinking…';
+    try {
+      const response=await fetch(`${API_BASE}/api/video/${encodeURIComponent(activeResult.id)}/ask`,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({question})});
+      const data=await response.json();
+      if(!response.ok) throw new Error(data.message||data.detail||`Question failed (${response.status})`);
+      messages.push({role:'assistant',text:data.answer||'No answer was returned.',citations:Array.isArray(data.citations)?data.citations:[]});
+      render();
+      document.querySelector('.qa-messages')?.scrollTo(0,document.querySelector('.qa-messages').scrollHeight);
+    } catch(e) {
+      messages.pop();
+      const box=document.querySelector('#qa-error'); box.textContent=`${e.message}${e instanceof TypeError?` Check that the API is running at ${API_BASE}.`:''}`; box.style.display='block';
+      document.querySelector('#qa-question').value=question;
+    } finally { const current=document.querySelector('#qa-form button'); if(current){current.disabled=false;current.textContent='Ask';} }
   }
 
   function bindPageEvents() {
@@ -74,6 +101,8 @@
     content.querySelectorAll('[data-open-notes]').forEach(node=>node.addEventListener('click',()=>{const item=saved.find(video=>video.id===node.dataset.openNotes);if(item){activeResult=item;resultTab='notes';setPage('result');}}));
     content.querySelectorAll('[data-open]').forEach(node=>node.addEventListener('click',event=>{if(event.target.closest('button') && !event.target.closest('[data-open]')) return; const item=saved.find(video=>video.id===node.dataset.open); if(item){activeResult=item;resultTab='summary';setPage('result');}}));
     content.querySelectorAll('[data-tab]').forEach(node=>node.addEventListener('click',()=>{resultTab=node.dataset.tab;render();}));
+    content.querySelectorAll('[data-question]').forEach(node=>node.addEventListener('click',()=>{const input=document.querySelector('#qa-question');if(input){input.value=node.dataset.question;input.focus();}}));
+    const qaForm=document.querySelector('#qa-form'); if(qaForm) qaForm.addEventListener('submit',askQuestion);
     content.querySelectorAll('[data-example]').forEach(node=>node.addEventListener('click',()=>{document.querySelector('#youtube-url').value=node.dataset.example;}));
     content.querySelectorAll('[data-copy]').forEach(node=>node.addEventListener('click',async()=>{const value=node.dataset.copy==='transcript'?activeResult?.transcript:activeResult?.summary;if(!value)return;try{await navigator.clipboard.writeText(value);notify(`${node.dataset.copy==='transcript'?'Transcript':'Summary'} copied`);}catch{notify('Clipboard access is unavailable in this browser');}}));
     const form=document.querySelector('#analyze-form'); if(form) form.addEventListener('submit',analyze);

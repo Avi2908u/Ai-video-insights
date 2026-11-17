@@ -19,6 +19,7 @@ public class TimestampedNotesService {
         this.aiService=aiService;
         this.objectMapper=objectMapper;
     }
+
     private String extractTopicTranscript(List<TranscriptSegment> segments, int startSec, int endSec){
         StringBuilder builder= new StringBuilder();
         for(TranscriptSegment segment : segments){
@@ -29,6 +30,7 @@ public class TimestampedNotesService {
         }
         return builder.toString();
     }
+
     public List<TimestampedNote> generateNotes(List<TranscriptSegment> segments) {
         try {
             String fullTranscript = segments.stream().map(TranscriptSegment::text)
@@ -49,21 +51,42 @@ public class TimestampedNotesService {
                 }
                 String topicTranscript = extractTopicTranscript(segments, start, end);
                 String aiResponse = aiService.generateTimestampedNotes(current.topic(), topicTranscript);
-                aiResponse = aiResponse.replace("```json", "").replace("```", "").trim();
-                JsonNode json = objectMapper.readTree(aiResponse);
-                notes.add(new TimestampedNote(current.timestamp(),
-                        json.get("title").asText("Untitled"), json.get("notes").asText("")));
+                String cleanJson = extractJsonObject(aiResponse);
+                JsonNode json = objectMapper.readTree(cleanJson);
+                String title = json.has("title") && !json.get("title").isNull() ? json.get("title").asText() : current.topic();
+                String noteText = json.has("notes") && !json.get("notes").isNull() ? json.get("notes").asText() : "";
+                notes.add(new TimestampedNote(current.timestamp(), title, noteText));
             }
             return notes;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to generate timestamped notes: " + e.getMessage(), e);
         }
     }
 
+    private String extractJsonObject(String raw) {
+        if (raw == null) return "{}";
+        String trimmed = raw.replace("```json", "").replace("```", "").trim();
+        int firstBrace = trimmed.indexOf('{');
+        int lastBrace = trimmed.lastIndexOf('}');
+        if (firstBrace != -1 && lastBrace != -1 && lastBrace > firstBrace) {
+            return trimmed.substring(firstBrace, lastBrace + 1);
+        }
+        return trimmed;
+    }
+
     private int timestampToSeconds(String timestamp){
-        String[] parts= timestamp.split(":");
-        int min= Integer.parseInt(parts[0]);
-        int sec= Integer.parseInt(parts[1]);
-        return min*60+sec;
+        if (timestamp == null || timestamp.isBlank()) return 0;
+        String[] parts = timestamp.trim().split(":");
+        try {
+            if (parts.length >= 3) {
+                return Integer.parseInt(parts[0]) * 3600 + Integer.parseInt(parts[1]) * 60 + Integer.parseInt(parts[2]);
+            }
+            if (parts.length == 2) {
+                return Integer.parseInt(parts[0]) * 60 + Integer.parseInt(parts[1]);
+            }
+            return Integer.parseInt(parts[0]);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 }

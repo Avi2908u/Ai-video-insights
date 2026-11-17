@@ -94,6 +94,11 @@ public class VideoAnalysisService {
         Transcript transcript =new Transcript();
         transcript.setVideo(video);
         transcript.setTranscriptText(transcriptText);
+        try {
+            transcript.setTranscriptSegments(objectMapper.writeValueAsString(transcriptResponse.getSegments()));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to store timestamped transcript segments", e);
+        }
         transcriptRepository.save(transcript);
 
         AiResults aiResults = new AiResults();

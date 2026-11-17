@@ -1,4 +1,9 @@
 
+### Archives ###
+*.zip
+*.tar.gz
+*.rar
+
 ### IntelliJ IDEA ###
 .idea
 *.iws
@@ -10,12 +15,14 @@
 
 ### Youtube Key###
 .env
+**/.env
 /venv
 # Local environments and generated files
 .venv/
 venv/
 **/venv/
 **/__pycache__/
+**/rag-index/
 **/.pytest_cache/
 **/.ruff_cache/
 **/target/

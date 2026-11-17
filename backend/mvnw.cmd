@@ -40,6 +40,12 @@
 @SET __MVNW_ARG0_NAME__=
 @SET MVNW_USERNAME=
 @SET MVNW_PASSWORD=
+@IF EXIST "%~dp0..\.env" (
+  @FOR /F "usebackq eol=# tokens=1* delims==" %%i IN (`findstr /B "JAVA_HOME=" "%~dp0..\.env"`) DO @IF NOT "%%j"=="" SET "JAVA_HOME=%%j"
+)
+@IF EXIST "%~dp0.env" (
+  @FOR /F "usebackq eol=# tokens=1* delims==" %%i IN (`findstr /B "JAVA_HOME=" "%~dp0.env"`) DO @IF NOT "%%j"=="" SET "JAVA_HOME=%%j"
+)
 @IF NOT "%__MVNW_CMD__%"=="" ("%__MVNW_CMD__%" %*)
 @echo Cannot start maven from wrapper >&2 && exit /b 1
 @GOTO :EOF

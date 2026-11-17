@@ -19,4 +19,7 @@ public class Transcript {
 
     @Column(columnDefinition = "TEXT")
     private String transcriptText;
+
+    @Column(columnDefinition = "TEXT")
+    private String transcriptSegments;
 }
