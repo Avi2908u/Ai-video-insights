@@ -68,6 +68,9 @@ public class VideoAnalysisService {
         }
         VideoResponse metadata = videoService.fetchMetadata(url);
         TranscriptResponse transcriptResponse = transcriptService.getTranscript(videoId);
+        if (transcriptResponse == null || transcriptResponse.getTranscript() == null || transcriptResponse.getTranscript().isBlank()) {
+            throw new RuntimeException("No transcript found for video: " + videoId + ". Ensure the video has captions enabled.");
+        }
         String transcriptText = transcriptResponse.getTranscript();
 
         String summary = aiService.generateSummary(transcriptText);

@@ -26,7 +26,10 @@ public class OpenRouterClient {
     }
 
     public String generateResponse(String prompt) {
-      OpenRouterRequest request = new OpenRouterRequest(model, List.of(new Message("user", prompt)));
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new RuntimeException("OPENROUTER_API_KEY is not configured on the server.");
+        }
+        OpenRouterRequest request = new OpenRouterRequest(model, List.of(new Message("user", prompt)));
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(apiKey);
         headers.setContentType(MediaType.APPLICATION_JSON);

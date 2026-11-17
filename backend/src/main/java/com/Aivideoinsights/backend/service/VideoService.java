@@ -13,12 +13,18 @@ public class VideoService {
     private String apiKey;
 
     public VideoResponse fetchMetadata(String url){
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new RuntimeException("YOUTUBE_API_KEY is not configured on the server.");
+        }
         String videoId=YoutubeUtil.extractVideoId(url);
         String apiUrl="https://www.googleapis.com/youtube/v3/videos" +
                 "?part=snippet,contentDetails" + "&id=" + videoId + "&key=" + apiKey;
 
         RestTemplate restTemplate = new RestTemplate();
         YoutubeResponse response = restTemplate.getForObject(apiUrl,YoutubeResponse.class);
+        if (response == null || response.getItems() == null || response.getItems().isEmpty()) {
+            throw new RuntimeException("YouTube video not found or invalid YouTube Data API key.");
+        }
         Item item= response.getItems().get(0);
         String title= item.getSnippet().getTitle();
         String channel=item.getSnippet().getChannelTitle();

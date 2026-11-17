@@ -17,9 +17,18 @@ public class TranscriptClient {
         this.transcriptServiceUrl=transcriptServiceUrl;
     }
     public TranscriptResponse fetchTranscript(String videoId){
-        return restTemplate.getForObject(
-                transcriptServiceUrl + "/transcript/{videoId}",
-                TranscriptResponse.class,
-                videoId);
+        TranscriptResponse response;
+        try {
+            response = restTemplate.getForObject(
+                    transcriptServiceUrl + "/transcript/{videoId}",
+                    TranscriptResponse.class,
+                    videoId);
+        } catch (Exception e) {
+            throw new RuntimeException("Could not connect to transcript service at " + transcriptServiceUrl + " (" + e.getMessage() + "). Check TRANSCRIPT_SERVICE_URL.", e);
+        }
+        if (response == null || response.getTranscript() == null || response.getTranscript().isBlank()) {
+            throw new RuntimeException("Transcript service returned empty transcript for video '" + videoId + "'. Ensure the video has subtitles/captions enabled.");
+        }
+        return response;
     }
 }
