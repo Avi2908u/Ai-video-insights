@@ -7,6 +7,7 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from youtube_transcript_api import YouTubeTranscriptApi
 
@@ -35,6 +36,23 @@ app = FastAPI(
     description="Fetches YouTube transcripts for the Spring Boot backend.",
     version="1.0.0",
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/")
+@app.get("/health")
+def health_check():
+    return {
+        "status": "ok",
+        "service": "transcript-service",
+        "rag_available": RAG_AVAILABLE,
+    }
 
 class AskRequest(BaseModel):
     videoId: str
@@ -141,19 +159,39 @@ def ask_video(payload: AskRequest) -> AskResponse:
 @app.get("/transcript/{video_id}")
 def get_transcript(video_id: str) -> dict:
     try:
-        transcript = YouTubeTranscriptApi().fetch(video_id, languages=["en", "hi"])
-        segments = [
-            {"text": snippet.text, "start": snippet.start}
-            for snippet in transcript
-        ]
+        api = YouTubeTranscriptApi()
+        fetched = None
+        lang = "en"
+        
+        # 1. Try listing available transcripts to find matching or auto-generated languages
+        try:
+            transcript_list = api.list(video_id)
+            try:
+                t = transcript_list.find_transcript(["en", "en-US", "en-GB", "hi"])
+            except Exception:
+                # If neither English nor Hindi is found, grab the first available transcript
+                t = next(iter(transcript_list))
+            fetched = t.fetch()
+            lang = getattr(t, "language_code", getattr(t, "language", "unknown"))
+        except Exception:
+            # Fallback to direct fetch
+            fetched = api.fetch(video_id, languages=["en", "en-US", "en-GB", "hi"])
+            lang = getattr(fetched, "language", "en")
+
+        segments = []
+        for snippet in fetched:
+            text = snippet.text if hasattr(snippet, "text") else (snippet.get("text", "") if isinstance(snippet, dict) else str(snippet))
+            start = snippet.start if hasattr(snippet, "start") else (snippet.get("start", 0) if isinstance(snippet, dict) else 0)
+            segments.append({"text": text, "start": start})
+
         return {
             "videoId": video_id,
-            "language": getattr(transcript, "language", "unknown"),
-            "transcript": " ".join(segment["text"] for segment in segments),
+            "language": lang,
+            "transcript": " ".join(seg["text"] for seg in segments if seg["text"]),
             "segments": segments,
         }
     except Exception as exc:
         raise HTTPException(
             status_code=502,
-            detail={"videoId": video_id, "error": str(exc)},
+            detail=f"Could not retrieve transcript for video {video_id}: {str(exc)}",
         ) from exc
