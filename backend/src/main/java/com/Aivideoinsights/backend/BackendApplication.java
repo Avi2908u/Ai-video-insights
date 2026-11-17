@@ -99,9 +99,9 @@ public class BackendApplication {
     }
 
     private static void ensureDatabaseExists() {
-        String dbUrl = System.getProperty("spring.datasource.url");
-        String user = System.getProperty("spring.datasource.username");
-        String pass = System.getProperty("spring.datasource.password");
+        String dbUrl = System.getProperty("spring.datasource.url", System.getenv("DB_URL"));
+        String user = System.getProperty("spring.datasource.username", System.getenv("DB_USERNAME"));
+        String pass = System.getProperty("spring.datasource.password", System.getenv("DB_PASSWORD"));
 
         if (dbUrl == null || !dbUrl.startsWith("jdbc:postgresql://")) {
             return;
