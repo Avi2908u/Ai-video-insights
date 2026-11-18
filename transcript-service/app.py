@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import re
 from pathlib import Path
 
 import requests
@@ -10,6 +11,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api.proxies import GenericProxyConfig, WebshareProxyConfig
 
 # Load environment variables from the project root .env (override=True ensures .env values take precedence)
 root_env = Path(__file__).resolve().parent.parent / ".env"
@@ -156,10 +158,34 @@ def ask_video(payload: AskRequest) -> AskResponse:
         raise HTTPException(status_code=502, detail=f"Question answering failed: {exc}") from exc
 
 
-@app.get("/transcript/{video_id}")
+def extract_video_id(val: str) -> str:
+    val = val.strip()
+    match = re.search(r"(?:v=|\/embed\/|\/v\/|youtu\.be\/|\/shorts\/|^)([A-Za-z0-9_-]{11})", val)
+    if match:
+        return match.group(1)
+    return val
+
+
+def get_youtube_api() -> YouTubeTranscriptApi:
+    webshare_user = os.getenv("WEBSHARE_USERNAME")
+    webshare_pass = os.getenv("WEBSHARE_PASSWORD")
+    proxy_url = os.getenv("HTTPS_PROXY") or os.getenv("HTTP_PROXY") or os.getenv("PROXY_URL")
+
+    if webshare_user and webshare_pass:
+        config = WebshareProxyConfig(proxy_username=webshare_user, proxy_password=webshare_pass)
+        return YouTubeTranscriptApi(proxy_config=config)
+    elif proxy_url:
+        config = GenericProxyConfig(http_url=proxy_url, https_url=proxy_url)
+        return YouTubeTranscriptApi(proxy_config=config)
+
+    return YouTubeTranscriptApi()
+
+
+@app.get("/transcript/{video_id:path}")
 def get_transcript(video_id: str) -> dict:
+    video_id = extract_video_id(video_id)
     try:
-        api = YouTubeTranscriptApi()
+        api = get_youtube_api()
         fetched = None
         lang = "en"
         
